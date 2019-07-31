@@ -9,13 +9,13 @@ public class BookingRepository extends BaseRepository {
      */
     public int create() {
         return getDataSource().withHandle(handle ->
-                handle.createUpdate("INSERT INTO bookings(experience_id, booking_date, travelers, price, currency) VALUES (:experience_id, :booking_date, :travelers, :price, :currency)")
-                        .bind("experience_id", 1234)
-                        .bind("booking_date", 20190312)
-                        .bind("travelers", 2)
-                        .bind("price", 25.00)
-                        .bind("currency", "EUR")
-                        .execute()
+            handle.createUpdate("INSERT INTO bookings(experience_id, booking_date, travelers, price, currency) VALUES (:experience_id, :booking_date, :travelers, :price, :currency)")
+                .bind("experience_id", 1234)
+                .bind("booking_date", 20190312)
+                .bind("travelers", 2)
+                .bind("price", 25.00)
+                .bind("currency", "EUR")
+                .execute()
         );
     }
 
