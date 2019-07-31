@@ -24,7 +24,7 @@ public class ExperienceService {
         this.bookingRepository = bookingRepository;
     }
 
-    public BookedExperienceVO bookExperience(BookExperienceVO bookExperienceVO) throws BookingException {
+    public synchronized BookedExperienceVO bookExperience(BookExperienceVO bookExperienceVO) throws BookingException {
         Experience experience = experiencesRepository.find(bookExperienceVO.getCode());
         BookedExperienceVO bookedExperienceVO = experience.book(bookExperienceVO);
 
