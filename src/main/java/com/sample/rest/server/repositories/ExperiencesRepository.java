@@ -1,8 +1,8 @@
 package com.sample.rest.server.repositories;
 
+import com.sample.rest.server.domain.BookingException;
 import com.sample.rest.server.domain.Experience;
 
-import javax.ws.rs.NotSupportedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +31,14 @@ public class ExperiencesRepository extends BaseRepository implements Repository<
 
     @Override
     public Experience find(Integer id) {
-        throw new NotSupportedException("not supported yet");
+        return getDataSource()
+            .withHandle(handle ->
+                handle.createQuery(currentQuery + "AND id = :id")
+                    .bind("id", id)
+                    .map(new ExperienceMapper())
+                    .findFirst()
+                    .orElseThrow(() -> new BookingException("Experience doesn't exist"))
+            );
     }
 
     /**
@@ -46,9 +53,31 @@ public class ExperiencesRepository extends BaseRepository implements Repository<
         return get();
     }
 
-    @Override
-    public Experience store(Experience entity) {
-        return null;
+    /**
+     * TODO: for now the only update that matters is the last one, but is fine to add the persistence of all entities's fields
+     *
+     * @param experience Entity to store
+     * @return The same Entity
+     */
+    public Experience store(Experience experience) {
+        getDataSource().withHandle(handle -> {
+
+            handle.createUpdate("UPDATE experiences SET location = :location WHERE id = :id")
+                .bind("location", experience.getLocation())
+                .bind("id", experience.getId())
+                .execute();
+
+            handle.createUpdate("UPDATE prices SET price = :price WHERE experience_id = :id")
+                .bind("price", experience.getPrice().getAmount())
+                .bind("id", experience.getId())
+                .execute();
+
+            return handle.createUpdate("UPDATE availability SET tickets = :tickets WHERE experience_id = :id")
+                .bind("tickets", experience.getTickets())
+                .bind("id", experience.getId())
+                .execute();
+        });
+        return experience;
     }
 
     /**

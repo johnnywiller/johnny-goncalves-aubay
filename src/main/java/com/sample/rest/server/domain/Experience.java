@@ -1,9 +1,13 @@
 package com.sample.rest.server.domain;
 
+import com.sample.rest.server.core.TimeProvider;
+import com.sample.rest.server.domain.valueobject.BookExperienceVO;
+import com.sample.rest.server.domain.valueobject.BookedExperienceVO;
 import com.sample.rest.server.domain.valueobject.Money;
 import com.sample.rest.server.domain.valueobject.PricedExperienceVO;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public final class Experience {
 
@@ -23,6 +27,17 @@ public final class Experience {
         return new Experience(id, location, tickets, price);
     }
 
+    public BookedExperienceVO book(BookExperienceVO bookExperienceVO) {
+        PricedExperienceVO pricedExperienceVO = priceForDate(bookExperienceVO.getDate(), bookExperienceVO.getTravelers());
+
+        if (!isSpaceAvailable(bookExperienceVO))
+            return invalidBooking(bookExperienceVO, pricedExperienceVO);
+
+        decreaseAvailability(bookExperienceVO.getTravelers());
+
+        return validBooking(bookExperienceVO, pricedExperienceVO);
+    }
+
     public PricedExperienceVO priceForDate(LocalDate date, Integer travelers) {
         PriceProvider provider = PriceProvider.ofDate(date);
 
@@ -36,6 +51,30 @@ public final class Experience {
 
     private void decreaseAvailability(Integer travelers) {
         this.tickets -= travelers;
+    }
+
+    private boolean isSpaceAvailable(BookExperienceVO bookExperienceVO) {
+        return (this.tickets >= bookExperienceVO.getTravelers());
+    }
+
+    private BookedExperienceVO validBooking(BookExperienceVO bookExperienceVO, PricedExperienceVO pricedExperienceVO) {
+        return BookedExperienceVO.of(
+            BookStatus.SUCCESS,
+            bookExperienceVO.getCode(),
+            bookExperienceVO.getDate().format(DateTimeFormatter.ofPattern(TimeProvider.DATE_FORMAT)),
+            bookExperienceVO.getTravelers(),
+            pricedExperienceVO.getPrice()
+        );
+    }
+
+    private BookedExperienceVO invalidBooking(BookExperienceVO bookExperienceVO, PricedExperienceVO pricedExperienceVO) {
+        return BookedExperienceVO.of(
+            BookStatus.FAILURE,
+            bookExperienceVO.getCode(),
+            bookExperienceVO.getDate().format(DateTimeFormatter.ofPattern(TimeProvider.DATE_FORMAT)),
+            bookExperienceVO.getTravelers(),
+            pricedExperienceVO.getPrice()
+        );
     }
 
     public int getId() {
